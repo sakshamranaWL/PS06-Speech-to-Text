@@ -1,0 +1,27 @@
+# Core ASR dependencies
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.30.0
+datasets>=2.12.0
+
+# Audio processing
+librosa>=0.10.0
+soundfile>=0.12.0
+pydub>=0.25.1
+
+# AI4Bharat specific
+ai4bharat-transliteration>=1.0.0
+indic-nlp-library>=0.92
+
+# Utilities
+tqdm>=4.65.0
+click>=8.1.0
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Evaluation
+jiwer>=3.0.3
