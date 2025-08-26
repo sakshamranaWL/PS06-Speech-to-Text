@@ -118,10 +118,10 @@ class WhisperTranscriber:
         start_time = time.time()
         
         try:
-            # Run transcription
+            # Run transcription with word-level timestamps for better confidence
             result = self.pipeline(
                 audio,
-                return_timestamps=True
+                return_timestamps="word"
             )
             
             processing_time = time.time() - start_time

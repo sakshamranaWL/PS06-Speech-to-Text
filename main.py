@@ -183,10 +183,27 @@ def graph(transcripts_dir, embeddings_dir, neo4j_uri, neo4j_username, neo4j_pass
 def serve(host, port, reload):
     """Start the FastAPI server."""
     import uvicorn
-    from src.api.main import app
+    from pathlib import Path
+    import sys
     
-    click.echo(f"Starting server on {host}:{port}")
-    uvicorn.run(app, host=host, port=port, reload=reload)
+    # Add project root to path
+    project_root = Path(__file__).parent
+    sys.path.insert(0, str(project_root))
+    
+    try:
+        from src.api.main import app
+        click.echo(f"🚀 Starting PS06 Speech-to-Text API Server on {host}:{port}")
+        click.echo(f"📖 API Documentation: http://{host}:{port}/docs")
+        click.echo(f"🔍 Alternative docs: http://{host}:{port}/redoc")
+        click.echo(f"🏥 Health check: http://{host}:{port}/health")
+        click.echo("=" * 60)
+        
+        uvicorn.run(app, host=host, port=port, reload=reload)
+    except ImportError as e:
+        click.echo(f"❌ Failed to import API: {e}")
+        click.echo("Make sure you have installed the required dependencies:")
+        click.echo("pip install -r requirements.txt")
+        return 1
 
 @cli.command()
 def demo():

@@ -44,7 +44,7 @@ PS06-Speech-to-Text/
 ├── data/                 # Audio files and transcripts
 │   ├── audio/           # Input audio files
 │   └── transcripts/     # Output transcripts
-└── models/              # Downloaded models
+└── models/              # For future local model usage (currently using API keys)
 ```
 
 ## 🎯 Supported Languages
