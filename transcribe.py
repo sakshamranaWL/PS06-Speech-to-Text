@@ -17,6 +17,7 @@ import torch
 import torchaudio
 import librosa
 import soundfile as sf
+import numpy as np
 from transformers import WhisperProcessor, WhisperForConditionalGeneration, pipeline
 import pandas as pd
 
@@ -120,10 +121,7 @@ class WhisperTranscriber:
             # Run transcription
             result = self.pipeline(
                 audio,
-                sampling_rate=sample_rate,
-                return_timestamps=True,
-                chunk_length_s=30,
-                stride_length_s=5
+                return_timestamps=True
             )
             
             processing_time = time.time() - start_time
@@ -149,15 +147,29 @@ class WhisperTranscriber:
     def _load_audio(self, audio_path: str) -> tuple:
         """Load and preprocess audio file."""
         try:
-            # Load audio
-            audio, sample_rate = librosa.load(audio_path, sr=16000)
+            # Load audio with torchaudio (most reliable)
+            audio, sample_rate = torchaudio.load(audio_path)
             
             # Convert to mono if stereo
-            if len(audio.shape) > 1:
-                audio = librosa.to_mono(audio)
+            if audio.shape[0] > 1:
+                audio = torch.mean(audio, dim=0)
             
-            # Normalize
-            audio = librosa.util.normalize(audio)
+            # Convert to numpy for processing
+            audio = audio.numpy()
+            
+            # Resample to 16kHz if needed
+            if sample_rate != 16000:
+                resampler = torchaudio.transforms.Resample(sample_rate, 16000)
+                audio = resampler(torch.tensor(audio)).numpy()
+                sample_rate = 16000
+            
+            # Ensure single channel (squeeze if needed)
+            if len(audio.shape) > 1:
+                audio = audio.squeeze()
+            
+            # Normalize (avoid librosa.util.normalize which has issues)
+            if np.max(np.abs(audio)) > 0:
+                audio = audio / np.max(np.abs(audio))
             
             logger.info(f"Audio loaded: {audio.shape}, sample rate: {sample_rate}")
             return audio, sample_rate
