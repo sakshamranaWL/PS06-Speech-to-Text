@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # FastAPI app
 app = FastAPI(
     title="PS06 Speech-to-Text API",
-    description="Multilingual speech recognition API supporting English, Hindi, and Punjabi",
+    description="Multilingual speech recognition API using OpenAI Whisper Large-v3 model supporting English, Hindi, and Punjabi",
     version="1.0.0"
 )
 
@@ -84,6 +84,16 @@ def get_transcriber(device: str = "auto") -> WhisperTranscriber:
             raise HTTPException(status_code=500, detail="Failed to initialize transcription service")
     return transcriber
 
+# Preload model at startup
+@app.on_event("startup")
+async def preload_model():
+    try:
+        logger.info("Preloading Whisper model on startup...")
+        _ = get_transcriber()
+        logger.info("Model preloaded")
+    except Exception as e:
+        logger.error(f"Model preload failed: {e}")
+
 def validate_audio_file(file: UploadFile) -> None:
     """Validate uploaded audio file."""
     if not file.filename:
@@ -142,9 +152,9 @@ async def root():
         },
         "supported_languages": ["en", "hi", "pa"],
         "models": {
-            "en": "OpenAI Whisper",
-            "hi": "OpenAI Whisper + Hindi Devanagari Converter",
-            "pa": "OpenAI Whisper + Punjabi Gurmukhi Converter"
+            "en": "OpenAI Whisper Large-v3",
+            "hi": "OpenAI Whisper Large-v3 + Hindi Devanagari Converter",
+            "pa": "OpenAI Whisper Large-v3 + Punjabi Gurmukhi Converter"
         }
     }
 
@@ -179,15 +189,18 @@ async def transcribe_audio(
     device: str = Form("auto", description="Device to use (auto, cpu, cuda)")
 ):
     """
-    Transcribe a single audio file.
+    Transcribe a single audio file using OpenAI Whisper Large-v3 model.
     
     **Language Options:**
-    - `auto`: Auto-detect language
-    - `en`: English
-    - `hi`: Hindi (outputs in Devanagari script)
-    - `pa`: Punjabi (outputs in Gurmukhi script)
+    - `auto`: Auto-detect language (recommended for mixed language content)
+    - `en`: English (optimized for English speech)
+    - `hi`: Hindi (outputs in Devanagari script, optimized for Hindi speech)
+    - `pa`: Punjabi (outputs in Gurmukhi script, optimized for Punjabi speech)
     
     **Supported Formats:** WAV, MP3, M4A, FLAC, OGG, AAC (max 50MB)
+    
+    **Model:** OpenAI Whisper Large-v3 (preloaded for performance)
+    **Task:** Transcribe (output stays in original language)
     """
     try:
         # Validate file
@@ -264,15 +277,18 @@ async def transcribe_batch(
     device: str = Form("auto", description="Device to use: 'cpu', 'cuda', or 'auto'")
 ):
     """
-    Transcribe multiple audio files in batch.
+    Transcribe multiple audio files in batch using OpenAI Whisper Large-v3 model.
     
     **Language Options:**
-    - `auto`: Auto-detect language
-    - `en`: English
-    - `hi`: Hindi (outputs in Devanagari script)
-    - `pa`: Punjabi (outputs in Gurmukhi script)
+    - `auto`: Auto-detect language (recommended for mixed language content)
+    - `en`: English (optimized for English speech)
+    - `hi`: Hindi (outputs in Devanagari script, optimized for Hindi speech)
+    - `pa`: Punjabi (outputs in Gurmukhi script, optimized for Punjabi speech)
     
     **Supported Formats:** WAV, MP3, M4A, FLAC, OGG, AAC (max 50MB per file)
+    
+    **Model:** OpenAI Whisper Large-v3 (preloaded for performance)
+    **Task:** Transcribe (output stays in original language)
     """
     try:
         # Get transcriber
@@ -381,9 +397,9 @@ async def get_supported_languages():
             "pa": "Use for Punjabi speech like 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਕਿਵੇਂ ਹੋ ਤੁਸੀਂ?' (outputs in Gurmukhi)"
         },
         "model_info": {
-            "en": "OpenAI Whisper",
-            "hi": "OpenAI Whisper + Hindi Devanagari Converter",
-            "pa": "OpenAI Whisper + Punjabi Gurmukhi Converter"
+            "en": "OpenAI Whisper Large-v3",
+            "hi": "OpenAI Whisper Large-v3 + Hindi Devanagari Converter",
+            "pa": "OpenAI Whisper Large-v3 + Punjabi Gurmukhi Converter"
         },
         "benefits": {
             "en": "High accuracy for English speech",

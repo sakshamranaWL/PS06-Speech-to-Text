@@ -14,7 +14,7 @@ import warnings
 import torch
 import torchaudio
 import numpy as np
-from transformers import pipeline
+import whisper
 import os
 
 # Suppress warnings
@@ -32,7 +32,7 @@ class WhisperTranscriber:
     
     def __init__(self, device: str = "auto"):
         """Initialize the transcriber."""
-        self.model_name = "openai/whisper-base"
+        self.model_name = "whisper-large-v3"
         self.device = self._get_device(device)
         
         logger.info(f"Initializing OpenAI Whisper transcriber")
@@ -61,19 +61,15 @@ class WhisperTranscriber:
         return device
     
     def _load_whisper(self):
-        """Load the Whisper model and processor."""
+        """Load the Whisper model locally using openai-whisper."""
         try:
-            logger.info("Loading OpenAI Whisper model and processor...")
-            
-            device_id = 0 if self.device == "cuda" else -1
-            self.pipeline = pipeline(
-                "automatic-speech-recognition",
-                model=self.model_name,
-                device=device_id
+            logger.info("Loading OpenAI Whisper model (local) ...")
+            # Use fp16 only on CUDA
+            self.model = whisper.load_model(
+                name="large-v3",
+                device=self.device
             )
-            
             logger.info("✅ OpenAI Whisper model loaded successfully!")
-            
         except Exception as e:
             logger.error(f"Failed to load Whisper model: {e}")
             raise
@@ -234,12 +230,16 @@ class WhisperTranscriber:
             logger.info(f"File saved to: {temp_audio_path}")
             logger.info(f"Transcribing: {temp_audio_path}")
             
-            # Load and process audio
-            audio, _ = self._load_audio(str(temp_audio_path))
-            
             # Transcribe with Whisper
             logger.info(f"🎯 Using Whisper for {language.upper()} transcription...")
-            result = self.pipeline(audio, return_timestamps="word")
+            # Map language hint: 'auto' -> None (auto-detect)
+            lang_hint = None if language == "auto" else language
+            result = self.model.transcribe(
+                str(temp_audio_path),
+                task="transcribe",
+                language=lang_hint,
+                fp16=(self.device == "cuda")
+            )
             
             # Process text based on language
             if result.get('text'):
@@ -254,16 +254,18 @@ class WhisperTranscriber:
             logger.info(f"Transcription result structure: {list(result.keys())}")
             logger.info(f"Transcription result: {result}")
             
-            # Process chunks
-            if 'chunks' in result:
-                chunks = result['chunks']
-                logger.info(f"Number of chunks: {len(chunks)}")
-                if chunks:
-                    logger.info(f"First chunk structure: {chunks[0]}")
+            # Normalize to chunks structure expected by API
+            chunks = []
+            segs = result.get('segments') or []
+            if segs:
+                for seg in segs:
+                    start = float(seg.get('start', 0.0))
+                    end = float(seg.get('end', 0.0))
+                    text = (seg.get('text') or '').strip()
+                    chunks.append({'timestamp': (start, end), 'text': text})
             else:
                 text = result.get('text', '')
                 chunks = [{'timestamp': (0.0, 0.0), 'text': text}]
-                result['chunks'] = chunks
             
             # Calculate confidence scores
             for chunk in chunks:
@@ -290,7 +292,7 @@ class WhisperTranscriber:
             return {
                 'success': True,
                 'audio_file': Path(audio_path).name,
-                'language': language,
+                'language': (result.get('language') or language),
                 'full_text': result.get('text', ''),
                 'segments': chunks,
                 'confidence': round(overall_confidence, 3),

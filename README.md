@@ -1,13 +1,16 @@
 # PS06 Speech-to-Text System
 
-A multilingual speech recognition system using **OpenAI Whisper** with automatic script conversion for high-quality transcription in English, Hindi, and Punjabi.
+A multilingual speech recognition system using **OpenAI Whisper Large-v3** with automatic script conversion for high-quality transcription in English, Hindi, and Punjabi.
 
 ## 🚀 Key Features
 
 - **Multilingual Support**: English, Hindi, and Punjabi transcription
 - **Native Script Output**: Hindi in Devanagari, Punjabi in Gurmukhi
-- **High Accuracy**: Uses OpenAI Whisper with script conversion
-- **Simple API**: Single consolidated API file with all endpoints
+- **High Accuracy**: Uses OpenAI Whisper Large-v3 with script conversion
+- **Preloaded Model**: Whisper Large-v3 model is preloaded for optimal performance
+- **Language Hints**: Optional language hints ('hi', 'pa', 'en') for better accuracy
+- **Task Configuration**: Uses task="transcribe" to keep output in original language
+- **Simple API**: FastAPI application with comprehensive endpoints
 - **Batch Processing**: Process multiple audio files efficiently
 - **Real-time Processing**: Fast transcription with progress tracking
 
@@ -48,7 +51,7 @@ python3 transcribe.py data/audio/punjabi1.mp3 --language pa
 
 **Start the API server**:
 ```bash
-python3 api.py
+python3 start_api.py
 ```
 
 **API endpoints**:
@@ -86,9 +89,9 @@ The system automatically detects when Whisper outputs Urdu/Arabic script and con
 
 | Language | Model | Script Output |
 |----------|-------|---------------|
-| **English** | OpenAI Whisper | English |
-| **Hindi** | OpenAI Whisper + Converter | Devanagari |
-| **Punjabi** | OpenAI Whisper + Converter | Gurmukhi |
+| **English** | OpenAI Whisper Large-v3 | English |
+| **Hindi** | OpenAI Whisper Large-v3 + Converter | Devanagari |
+| **Punjabi** | OpenAI Whisper Large-v3 + Converter | Gurmukhi |
 
 ### Performance
 
@@ -111,19 +114,26 @@ The system automatically detects when Whisper outputs Urdu/Arabic script and con
 
 3. **Start API server**:
    ```bash
-   python3 api.py
+   python3 start_api.py
    ```
 
 4. **Access API documentation**:
    - Open: http://localhost:8000/docs
    - Interactive Swagger UI
 
+5. **Test the API**:
+   ```bash
+   python3 test_api.py
+   ```
+
 ## 📁 Project Structure
 
 ```
 PS06-Speech-to-Text/
 ├── transcribe.py          # Main transcription functionality
-├── api.py                 # Consolidated FastAPI application
+├── api.py                 # FastAPI application
+├── start_api.py           # API startup script
+├── test_api.py            # API testing script
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
 ├── LICENSE               # MIT License
