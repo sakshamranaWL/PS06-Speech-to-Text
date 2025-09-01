@@ -1,142 +1,150 @@
-# 🎤 PS06 Speech-to-Text System
+# PS06 Speech-to-Text System
 
-**Multilingual Speech Recognition using AI4Bharat IndicConformer Model from AI Kosh**
+A multilingual speech recognition system using **OpenAI Whisper** with automatic script conversion for high-quality transcription in English, Hindi, and Punjabi.
 
-## 🌟 Features
+## 🚀 Key Features
 
-- **Multilingual ASR**: English, Hindi, and Punjabi support
-- **AI4Bharat IndicConformer**: State-of-the-art model for Indian languages
-- **Audio Processing**: Support for WAV, MP3, M4A, FLAC formats
-- **Batch Processing**: Efficient processing of multiple audio files
-- **Evaluation Metrics**: WER/CER calculation and analysis
-- **Simple CLI**: Easy-to-use command-line interface
+- **Multilingual Support**: English, Hindi, and Punjabi transcription
+- **Native Script Output**: Hindi in Devanagari, Punjabi in Gurmukhi
+- **High Accuracy**: Uses OpenAI Whisper with script conversion
+- **Simple API**: Single consolidated API file with all endpoints
+- **Batch Processing**: Process multiple audio files efficiently
+- **Real-time Processing**: Fast transcription with progress tracking
+
+## 🛠️ Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd PS06-Speech-to-Text
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Verify installation**:
+   ```bash
+   python3 transcribe.py --help
+   ```
+
+## 📖 Usage
+
+### Command Line Interface
+
+**Single file transcription**:
+```bash
+python3 transcribe.py data/audio/hindi1.mp3 --language hi
+python3 transcribe.py data/audio/english1.mp3 --language en
+python3 transcribe.py data/audio/punjabi1.mp3 --language pa
+```
+
+**Available options**:
+- `--language`: Language code (`en`, `hi`, `pa`, `auto`)
+- `--device`: Device to use (`auto`, `cpu`, `cuda`)
+
+### API Usage
+
+**Start the API server**:
+```bash
+python3 api.py
+```
+
+**API endpoints**:
+- `GET /`: API information
+- `POST /transcribe`: Transcribe single audio file
+- `POST /transcribe-batch`: Batch transcribe multiple files
+- `GET /supported-languages`: Get language information
+- `GET /health`: Health check
+- `GET /docs`: Interactive API documentation
+
+**Example API usage**:
+```bash
+curl -X POST "http://localhost:8000/transcribe" \
+  -F "file=@audio_file.wav" \
+  -F "language=hi"
+```
+
+## 🔧 How It Works
+
+### Language-Specific Processing
+
+1. **English**: Uses OpenAI Whisper directly
+2. **Hindi**: Uses Whisper + Hindi Devanagari script converter
+3. **Punjabi**: Uses Whisper + Punjabi Gurmukhi script converter
+
+### Script Conversion
+
+The system automatically detects when Whisper outputs Urdu/Arabic script and converts it to the appropriate native script:
+- **Hindi audio** → **Devanagari script** (नमस्ते)
+- **Punjabi audio** → **Gurmukhi script** (ਸਤ ਸ੍ਰੀ ਅਕਾਲ)
+
+## 📊 Technical Details
+
+### Models Used
+
+| Language | Model | Script Output |
+|----------|-------|---------------|
+| **English** | OpenAI Whisper | English |
+| **Hindi** | OpenAI Whisper + Converter | Devanagari |
+| **Punjabi** | OpenAI Whisper + Converter | Gurmukhi |
+
+### Performance
+
+- **Processing Speed**: ~8-11 seconds per audio file
+- **Accuracy**: High confidence scores (0.7-0.8)
+- **Memory Usage**: Efficient with automatic cleanup
+- **File Support**: WAV, MP3, M4A, FLAC, OGG, AAC
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+1. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### 2. Download Model
-```bash
-# Download AI4Bharat IndicConformer model from AI Kosh
-make download-model
-```
+2. **Test with sample audio**:
+   ```bash
+   python3 transcribe.py data/audio/hindi1.mp3 --language hi
+   ```
 
-### 3. Transcribe Audio
-```bash
-# Single file
-python transcribe.py --audio path/to/audio.wav --language hi
+3. **Start API server**:
+   ```bash
+   python3 api.py
+   ```
 
-# Batch processing
-python transcribe.py --input-dir data/audio --output-dir data/transcripts
-```
+4. **Access API documentation**:
+   - Open: http://localhost:8000/docs
+   - Interactive Swagger UI
 
 ## 📁 Project Structure
 
 ```
 PS06-Speech-to-Text/
-├── transcribe.py          # Main transcription script
-├── download_models.py     # Model download utility
+├── transcribe.py          # Main transcription functionality
+├── api.py                 # Consolidated FastAPI application
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
-├── data/                 # Audio files and transcripts
-│   ├── audio/           # Input audio files
-│   └── transcripts/     # Output transcripts
-└── models/              # For future local model usage (currently using API keys)
+├── LICENSE               # MIT License
+└── data/
+    └── audio/            # Sample audio files
 ```
 
-## 🎯 Supported Languages
+## 🔍 Troubleshooting
 
-- **English (en)**: General English speech
-- **Hindi (hi)**: Hindi speech with Devanagari script
-- **Punjabi (pa)**: Punjabi speech with Gurmukhi script
+### Common Issues
 
-## 🔧 Configuration
+1. **Model loading errors**: Ensure sufficient disk space and internet connection
+2. **Memory issues**: Use CPU device for lower memory usage
+3. **Audio format issues**: Convert to supported formats (WAV, MP3, etc.)
 
-The system uses the AI4Bharat IndicConformer model by default:
+### Performance Tips
 
-```yaml
-Model: ai4bharat/indic-conformer-v1
-Languages: [hi, en, pa]
-Source: AI Kosh / HuggingFace
-```
+- Use specific language codes (`hi`, `pa`) instead of `auto` for better accuracy
+- Use GPU (`cuda`) if available for faster processing
+- Process audio files in batch for efficiency
 
-## 📊 Output Format
+## 📝 License
 
-Transcripts are saved in JSON format:
-
-```json
-{
-  "audio_file": "audio.wav",
-  "language": "hi",
-  "segments": [
-    {
-      "text": "मेरा नाम राहुल है",
-      "start_time": 0.0,
-      "end_time": 2.5,
-      "confidence": 0.95
-    }
-  ],
-  "metadata": {
-    "model": "ai4bharat/indic-conformer-v1",
-    "processing_time": 15.2
-  }
-}
-```
-
-## 🧪 Testing
-
-Test the system with sample audio files:
-
-```bash
-# Test Hindi transcription
-python transcribe.py --audio test_audio/hindi_sample.wav --language hi
-
-# Test English transcription  
-python transcribe.py --audio test_audio/english_sample.wav --language en
-
-# Test Punjabi transcription
-python transcribe.py --audio test_audio/punjabi_sample.wav --language pa
-```
-
-## 📈 Performance
-
-- **Accuracy**: State-of-the-art performance on Indic languages
-- **Speed**: Real-time processing capability
-- **Memory**: Optimized for efficient resource usage
-- **Scalability**: Batch processing for large datasets
-
-## 🛠️ Available Commands
-
-```bash
-# System setup
-make install              # Install dependencies
-make test                 # Run system tests
-make download-model       # Download AI4Bharat model
-make verify-model         # Verify downloaded model
-
-# Transcription
-python transcribe.py --help                    # Show help
-python transcribe.py --audio file.wav --language hi  # Single file
-python transcribe.py --input-dir audio/ --output-dir transcripts/  # Batch
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **AI4Bharat** for the IndicConformer model
-- **AI Kosh** for model distribution
-- **Open Source Community** for supporting libraries
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
